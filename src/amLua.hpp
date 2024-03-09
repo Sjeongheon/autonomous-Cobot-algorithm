@@ -2,6 +2,7 @@
 #define AMLUA_HPP
 
 #include <string>
+#include <map>
 
 namespace SYE {
 
@@ -24,19 +25,19 @@ class YeLua: private _Lua {
 private:
 protected:
 public:
-	YeLua();
+	YeLua(const char *);
 	virtual ~YeLua() = default;
-
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class YeLuaManager {
+class YeLuaManager: public std::map<std::string, YeLua *>  {
 private:
+	std::string mPath;
 	lua_State *pLuaState;
 protected:
 public:
-	YeLuaManager();
+	YeLuaManager(const char *);
 	virtual ~YeLuaManager();
 };
 

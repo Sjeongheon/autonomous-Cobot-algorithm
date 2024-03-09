@@ -2,12 +2,12 @@
 
 using namespace SYE;
 
-YeLua::YeLua() {
+YeLua::YeLua(const char *scriptFileName) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-YeLuaManager::YeLuaManager() {
+YeLuaManager::YeLuaManager(const char *scriptPath) {
 	pLuaState = luaL_newstate();
 }
 
