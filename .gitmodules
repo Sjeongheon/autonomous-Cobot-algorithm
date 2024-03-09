@@ -1,0 +1,6 @@
+[submodule "imgui"]
+	path = imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "darknet"]
+	path = darknet
+	url = https://github.com/AlexeyAB/darknet.git
