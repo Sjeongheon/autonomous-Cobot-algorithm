@@ -1,0 +1,5 @@
+C:/Users/fight/source/repos/ImguiTest/out/build/x64-Debug (default)/CMakeFiles/edit_cache.dir
+C:/Users/fight/source/repos/ImguiTest/out/build/x64-Debug (default)/CMakeFiles/rebuild_cache.dir
+C:/Users/fight/source/repos/ImguiTest/out/build/x64-Debug (default)/ImguiTest/CMakeFiles/testImgui.dir
+C:/Users/fight/source/repos/ImguiTest/out/build/x64-Debug (default)/ImguiTest/CMakeFiles/edit_cache.dir
+C:/Users/fight/source/repos/ImguiTest/out/build/x64-Debug (default)/ImguiTest/CMakeFiles/rebuild_cache.dir
