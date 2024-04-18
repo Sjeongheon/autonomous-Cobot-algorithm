@@ -28,3 +28,26 @@
 #ifdef __EMSCRIPTEN__
 #include "../libs/emscripten/emscripten_mainloop_stub.h"
 #endif
+
+
+namespace SYE {
+
+struct Pose {
+	float x,y,z;
+	Pose(float _x, float _y, float _z) {
+		x = _x; y=_y; z=_z;
+	}
+};
+
+class DrawClient {
+private:
+	Pose mPose;
+	double mSize = 0.3;
+public:
+	DrawClient(double, Pose = Pose(0.,0.,0.));
+	virtual ~DrawClient() = default;
+
+	void draw();
+};
+
+}

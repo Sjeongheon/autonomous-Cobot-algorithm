@@ -3,6 +3,18 @@
 
 #include "ImguiTest.h"
 
+using namespace SYE;
+
+DrawClient::DrawClient(double size, Pose pose): mSize(size), mPose(pose) {
+	//mSize = size;
+}
+
+void DrawClient::draw() {
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
@@ -131,6 +143,10 @@ int main(int, char**)
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != nullptr);
 
+		//Client for draw
+		SYE::DrawClient draw0(0.5);
+		SYE::DrawClient *pDraw1 = new SYE::DrawClient(0.3);
+
     // Our state
     bool show_demo_window = false;
     bool show_another_window = false;
@@ -168,6 +184,9 @@ int main(int, char**)
         glClear(GL_COLOR_BUFFER_BIT);
 
         display();
+				draw0.draw();
+				pDraw1->draw();
+
         changeViewPoint(f, ax, ay, az);
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
@@ -200,6 +219,7 @@ int main(int, char**)
                 show_another_window = false;
             ImGui::End();
         }
+
 
         // Rendering
         ImGui::Render();

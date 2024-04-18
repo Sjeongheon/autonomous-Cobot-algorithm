@@ -11,6 +11,9 @@ ENDIF()
 
 MESSAGE("Build type: " ${CMAKE_BUILD_TYPE})
 
+find_package(glfw3 REQUIRED)
+list(APPEND LINK_LIBS glfw)
+
 add_compile_options(-march=native -fPIC)
 
 #imgui
@@ -31,4 +34,4 @@ add_executable(testImgui ${SRC})
 
 find_package(OpenGL REQUIRED)
 target_link_libraries(testImgui PRIVATE ${OPENGL_gl_LIBRARY})
-target_link_libraries(testImgui PRIVATE glfw3)
+target_link_libraries(testImgui PRIVATE glfw)
