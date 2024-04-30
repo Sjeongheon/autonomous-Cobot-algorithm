@@ -18,7 +18,7 @@ add_compile_options(-march=native -fPIC)
 
 #imgui
 set(IMGUI "${PROJECT_SOURCE_DIR}/src/imgui")
-list(APPEND INC_DIRS ${IMGUI} include/glad include/GLFW include/imgui include/KHR include)
+list(APPEND INC_DIRS ${IMGUI} include/glad include/GLFW include/imgui include/KHR include/glm include)
 
 list(APPEND LINK_LIBS lib)
 
