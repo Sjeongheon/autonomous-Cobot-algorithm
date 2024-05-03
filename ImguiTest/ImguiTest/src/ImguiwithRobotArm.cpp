@@ -1,7 +1,7 @@
-// ImguiTest.cpp : Defines the entry point for the application.
-//
-
 #include "ImguiTest.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 using namespace SYE;
 
@@ -9,7 +9,7 @@ using namespace SYE;
 GLuint shaderProgram;
 GLuint vertexShader;
 GLuint fragmentShader;
-GLuint VAO;
+GLuint VAO, floorVAO, floorVBO;
 
 float baseAngle = 0.0f;
 float lowerArmAngle = 0.0f;
@@ -20,10 +20,15 @@ static float cameralocation_x = 0.0f;
 static float cameralocation_y = 0.0f;
 static float cameralocation_z = 5.0f;
 
+static float targetlocation_x = 0.0f;
+static float targetlocation_y = 0.0f;
+static float targetlocation_z = 5.0f;
+
 GLfloat vertices[] = {
         -0.5f, -0.5f, -0.5f,  0.5f, -0.5f, -0.5f,  0.5f,  0.5f, -0.5f, -0.5f,  0.5f, -0.5f,
         -0.5f, -0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f,
 };
+
 GLuint indices[] = {
     0, 1, 2, 2, 3, 0,
     4, 5, 6, 6, 7, 4,
@@ -33,6 +38,30 @@ GLuint indices[] = {
     2, 3, 7, 7, 6, 2
 };
 
+static float viewRange = 10.0f;
+
+std::vector<float> generateGridVertices(float viewRange) {
+    std::vector<float> vertices;
+    for (float i = -viewRange; i <= viewRange; i += 1.0f) {
+        // xz í‰ë©´ì—ì„œ zì¶• ë°©í–¥ìœ¼ë¡œ ì¤„
+        vertices.push_back(i);
+        vertices.push_back(0.0f);
+        vertices.push_back(-viewRange);
+        vertices.push_back(i);
+        vertices.push_back(0.0f);
+        vertices.push_back(viewRange);
+
+        // xz í‰ë©´ì—ì„œ xì¶• ë°©í–¥ìœ¼ë¡œ ì¤„
+        vertices.push_back(-viewRange);
+        vertices.push_back(0.0f);
+        vertices.push_back(i);
+        vertices.push_back(viewRange);
+        vertices.push_back(0.0f);
+        vertices.push_back(i);
+    }
+    return vertices;
+}
+
 const char* vertSource =
 "#version 330 core \n\
 layout (location = 0) in vec3 aPos; \n\
@@ -40,7 +69,7 @@ uniform mat4 model; \n\
 uniform mat4 view; \n\
 uniform mat4 projection; \n\
 void main(void) { \n\
-	gl_Position = projection * view * model * vec4(aPos, 1.0); \n\
+    gl_Position = projection * view * model * vec4(aPos, 1.0); \n\
 }";
 
 const char* fragSource =
@@ -48,7 +77,7 @@ const char* fragSource =
 out vec4 FragColor; \n\
 uniform vec4 objectColor; \n\
 void main(void) { \n\
-	FragColor = objectColor; \n\
+    FragColor = objectColor; \n\
 }";
 
 DrawClient::DrawClient(double size, Pose pose) : mSize(size), mPose(pose) {
@@ -94,19 +123,30 @@ DrawClient::DrawClient(double size, Pose pose) : mSize(size), mPose(pose) {
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
+    // ë°”ë‹¥ ì •ì  ìƒì„± ë° ë²„í¼ ì„¤ì •
+    std::vector<float> floorVertices = generateGridVertices(viewRange);
+    glGenVertexArrays(1, &floorVAO);
+    glGenBuffers(1, &floorVBO);
+    glBindVertexArray(floorVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, floorVBO);
+    glBufferData(GL_ARRAY_BUFFER, floorVertices.size() * sizeof(float), &floorVertices[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
 }
 
 void DrawClient::draw() {
-    // ¼ÎÀÌ´õ ÇÁ·Î±×·¥ »ç¿ë
+    // ì…°ì´ë” í”„ë¡œê·¸ëž¨ ì‚¬ìš©
     glUseProgram(shaderProgram);
     glBindVertexArray(VAO);
 
-    // ±âº» Çà·Ä ¼³Á¤
-    glm::mat4 projection = glm::perspective(glm::radians(perspective_angle) // ½Ã¾ß °¢
-        , (float)1280 / (float)720, 0.1f, 100.0f);
-    glm::mat4 view = glm::lookAt(glm::vec3(cameralocation_x, cameralocation_y, cameralocation_z) // Ä«¸Þ¶ó À§Ä¡
-        , glm::vec3(0.0f, 0.0f, 0.0f) // ¹Ù¶óº¸´Â ÁöÁ¡
-        , glm::vec3(0.0f, 1.0f, 0.0f)); // »ó´Ü ¹æÇâ
+    // ê¸°ë³¸ í–‰ë ¬ ì„¤ì •
+    glm::mat4 projection = glm::perspective(glm::radians(perspective_angle), (float)1280 / (float)720, 0.1f, 100.0f);
+    glm::mat4 view = glm::lookAt(glm::vec3(cameralocation_x, cameralocation_y, cameralocation_z),
+        glm::vec3(targetlocation_x, targetlocation_y, targetlocation_z),
+        glm::vec3(0.0f, 1.0f, 0.0f));
     glm::mat4 model = glm::mat4(1.0f);
 
     GLint modelLoc = glGetUniformLocation(shaderProgram, "model");
@@ -116,22 +156,31 @@ void DrawClient::draw() {
     glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 
     GLint objectColorLoc = glGetUniformLocation(shaderProgram, "objectColor");
-    // ±âº» °üÀýÀÇ À§Ä¡ ¼³Á¤ ¹× ±×¸®±â
+
+    // ë°”ë‹¥ ê·¸ë¦¬ê¸°
+    glBindVertexArray(floorVAO);
+    glUniform4f(objectColorLoc, 0.7f, 0.7f, 0.7f, 1.0f);
+    glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
+    glDrawArrays(GL_LINES, 0, (viewRange * 2 + 1) * 4 * 2);
+    glBindVertexArray(0);
+
+    // ê¸°ë³¸ ê´€ì ˆì˜ ìœ„ì¹˜ ì„¤ì • ë° ê·¸ë¦¬ê¸°
+    glBindVertexArray(VAO);
     model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, glm::radians(baseAngle), glm::vec3(0.0f, 0.0f, 1.0f));
     glUniform4f(objectColorLoc, 1.0f, 0.5f, 0.2f, 1.0f);
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);  // ¼¼±×¸ÕÆ® ±×¸®±â
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // ÀÔ¹æÃ¼·Î °üÀý ºÎºÐ ±×¸®±â
+    // ìž…ë°©ì²´ë¡œ ê´€ì ˆ ë¶€ë¶„ ê·¸ë¦¬ê¸°
     model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(2.0f, 1.0f, 1.0f)); // °üÀýÀÇ Å©±â Á¶Àý
+    model = glm::scale(model, glm::vec3(2.0f, 1.0f, 1.0f));
     glUniform4f(objectColorLoc, 0.0f, 1.0f, 0.0f, 1.0f);
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0); // °üÀý ±×¸®±â
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // ÇÏÀ§ ÆÈ ±×¸®±â
-    model = glm::scale(model, glm::vec3(0.5f, 1.0f, 1.0f)); // Å©±â º¹¿ø
+    // í•˜ìœ„ íŒ” ê·¸ë¦¬ê¸°
+    model = glm::scale(model, glm::vec3(0.5f, 1.0f, 1.0f));
     model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, glm::radians(upperArmAngle), glm::vec3(0.0f, 0.0f, 1.0f));
     model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -139,15 +188,15 @@ void DrawClient::draw() {
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // ÀÔ¹æÃ¼·Î °üÀý ºÎºÐ ±×¸®±â
+    // ìž…ë°©ì²´ë¡œ ê´€ì ˆ ë¶€ë¶„ ê·¸ë¦¬ê¸°
     model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(2.0f, 1.0f, 1.0f)); // °üÀýÀÇ Å©±â Á¶Àý
+    model = glm::scale(model, glm::vec3(2.0f, 1.0f, 1.0f));
     glUniform4f(objectColorLoc, 0.0f, 1.0f, 0.0f, 1.0f);
     glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
-    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0); // °üÀý ±×¸®±â
+    glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    // ÇÏÀ§ ÆÈ ±×¸®±â
-    model = glm::scale(model, glm::vec3(0.5f, 1.0f, 1.0f)); // Å©±â º¹¿ø
+    // í•˜ìœ„ íŒ” ê·¸ë¦¬ê¸°
+    model = glm::scale(model, glm::vec3(0.5f, 1.0f, 1.0f));
     model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
     model = glm::rotate(model, glm::radians(lowerArmAngle), glm::vec3(0.0f, 0.0f, 1.0f));
     model = glm::translate(model, glm::vec3(1.0f, 0.0f, 0.0f));
@@ -160,19 +209,9 @@ void DrawClient::draw() {
 
 /////////////////////////////////////////////////////////////////////////////
 
-
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
-}
-
-void changeViewPoint(float f1, float a1, float a2, float a3) {
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glTranslatef(0, 0, f1);
-    glRotatef(a1, 1, 0, 0);
-    glRotatef(a2, 0, 1, 0);
-    glRotatef(a3, 0, 0, 1);
 }
 
 void processInput(GLFWwindow* window) {
@@ -186,7 +225,6 @@ void processInput(GLFWwindow* window) {
         lowerArmAngle -= 1.0f;
 }
 
-
 // Main code
 int main(int, char**)
 {
@@ -197,35 +235,27 @@ int main(int, char**)
 
     // Decide GL+GLSL versions
 #if defined(IMGUI_IMPL_OPENGL_ES2)
-    // GL ES 2.0 + GLSL 100
     const char* glsl_version = "#version 100";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
     glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_ES_API);
 #elif defined(__APPLE__)
-    // GL 3.2 + GLSL 150
     const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // Required on Mac
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #else
-    // GL 3.0 + GLSL 130
     const char* glsl_version = "#version 130";
-    //// Tell GLFW what version of OpenGL we are using 
-    // In this case we are using OpenGL 3.3
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    // Tell GLFW we are Using Core-Profile 
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 #endif
 
     // Create window with graphics context
     GLFWwindow* window = glfwCreateWindow(1280, 720, "ImGui + OpenGL Testing Tool Prototype", nullptr, nullptr);
     if (window == nullptr)
         return 1;
-    // Make the window's context current - current thread
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
 
@@ -233,72 +263,39 @@ int main(int, char**)
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
-#ifdef __EMSCRIPTEN__
-    ImGui_ImplGlfw_InstallEmscriptenCanvasResizeCallback("#canvas");
-#endif
     ImGui_ImplOpenGL3_Init(glsl_version);
-
-    // Load Fonts
-    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-    // - If the file cannot be loaded, the function will return a nullptr. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-    // - Use '#define IMGUI_ENABLE_FREETYPE' in your imconfig file to use Freetype for higher quality font rendering.
-    // - Read 'docs/FONTS.md' for more instructions and details.
-    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    // - Our Emscripten build process allows embedding fonts to be accessible at runtime from the "fonts/" folder. See Makefile.emscripten for details.
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\segoeui.ttf", 18.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != nullptr);
 
     // Load GLAD 
     gladLoadGL();
 
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
-    // x=0, y=0 to x=1280, y=720
     glViewport(0, 0, display_w, display_h);
 
     //Client for draw
     SYE::DrawClient draw0(0.5, Pose(0.0f, 0.0f, 0.0f));
-    //SYE::DrawClient* pDraw1 = new SYE::DrawClient(0.3);
 
     // Our state
     bool show_demo_window = false;
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    // Main loop
 #ifdef __EMSCRIPTEN__
-    // For an Emscripten build we are disabling file-system access, so let's not attempt to do a fopen() of the imgui.ini file.
-    // You may manually call LoadIniSettingsFromMemory() to load settings from your own storage.
     io.IniFilename = nullptr;
     EMSCRIPTEN_MAINLOOP_BEGIN
 #else
     while (!glfwWindowShouldClose(window))
 #endif
     {
-        // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application, or clear/overwrite your copy of the keyboard data.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-
-
-        // Start the Dear ImGui frame
+        // Poll and handle events
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -307,48 +304,40 @@ int main(int, char**)
 
         //Rendering
         glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        //display();
         draw0.draw();
-        //pDraw1->draw();
 
-
-
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
             ImGui::ShowDemoWindow(&show_demo_window);
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        {
+        ImGui::Begin("3D visualization tool");
+        ImGui::SetWindowSize(ImVec2(400, 400));
+        ImGui::Text("Work Optimization for Cobot");
+        ImGui::Text("Perspective Setting");
+        ImGui::SliderFloat("Perspective", &perspective_angle, 0.0f, 180.0f);
+        ImGui::SliderFloat("rotateX", &cameralocation_x, -180.0f, 180.0f);
+        ImGui::SliderFloat("rotateY", &cameralocation_y, -180.0f, 180.0f);
+        ImGui::SliderFloat("rotateZ", &cameralocation_z, -180.0f, 180.0f);
+        ImGui::Text("\nMove to Location - Inverse Kinematics");
+        ImGui::SliderFloat("FloatX", &targetlocation_x, -20.0f, 20.0f);
+        ImGui::SliderFloat("FloatY", &targetlocation_y, -20.0f, 20.0f);
+        ImGui::SliderFloat("FloatZ", &targetlocation_z, -20.0f, 20.0f);
+        ImGui::Text("\nMoving Arm - Forward Kinematics");
+        ImGui::SliderFloat("baseAngle", &baseAngle, -180.0f, 180.0f);
+        ImGui::SliderFloat("upperArmAngle", &upperArmAngle, -180.0f, 180.0f);
+        ImGui::SliderFloat("lowerArmAngle", &lowerArmAngle, -180.0f, 180.0f);
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        ImGui::End();
 
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-            ImGui::SetWindowSize(ImVec2(400, 250));
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("Perspective", &perspective_angle, 0.0f, 180.0f); // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::SliderFloat("rotateX", &cameralocation_x, -180.0f, 180.0f);
-            ImGui::SliderFloat("rotateY", &cameralocation_y, -180.0f, 180.0f);
-            ImGui::SliderFloat("rotateZ", &cameralocation_z, -180.0f, 180.0f);
-            ImGui::SliderFloat("baseAngle", &baseAngle, -180.0f, 180.0f);
-            ImGui::SliderFloat("upperArmAngle", &upperArmAngle, -180.0f, 180.0f);
-            ImGui::SliderFloat("lowerArmAngle", &lowerArmAngle, -180.0f, 180.0f);
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
-
-        // 3. Show another simple window.
         if (show_another_window)
         {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+            ImGui::Begin("Another Window", &show_another_window);
             ImGui::Text("Hello from another window!");
             if (ImGui::Button("Close Me"))
                 show_another_window = false;
             ImGui::End();
         }
-
 
         // Rendering
         ImGui::Render();
