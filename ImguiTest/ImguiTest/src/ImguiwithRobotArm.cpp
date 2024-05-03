@@ -319,7 +319,7 @@ int main(int, char**)
         ImGui::SliderFloat("rotateX", &cameralocation_x, -180.0f, 180.0f);
         ImGui::SliderFloat("rotateY", &cameralocation_y, -180.0f, 180.0f);
         ImGui::SliderFloat("rotateZ", &cameralocation_z, -180.0f, 180.0f);
-        ImGui::Text("\nMove to Location - Inverse Kinematics");
+        ImGui::Text("\nMove to Location - View Matrix");
         ImGui::SliderFloat("FloatX", &targetlocation_x, -20.0f, 20.0f);
         ImGui::SliderFloat("FloatY", &targetlocation_y, -20.0f, 20.0f);
         ImGui::SliderFloat("FloatZ", &targetlocation_z, -20.0f, 20.0f);
