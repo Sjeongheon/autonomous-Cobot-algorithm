@@ -65,12 +65,13 @@ void angle_axis_from_vec_dir(Vec3 vec, Vec3 dir, float* ang, Vec3* ax) {
     ax->z = 0.0f;
 }
 
-float linkangle1 = 40.0f;
-float linkangle2 = 40.0f;
-float linkangle4 = 40.0f;
-float linkangle6 = 40.0f;
-float linkangle7 = 40.0f;
-float linkangle5 = 40.0f;
+float linkangle1 = 50.0f;
+float linkangle2 = 0.0f;
+float linkangle4 = 0.0f;
+float linkangle5 = 0.0f;
+float linkangle6 = 0.0f;
+float linkangle7 = 90.0f;
+
 // Render function for the robot graphics
 void render_robot(Kinematics* kinematics, Options* options) {
     GLUquadric* quadric = gluNewQuadric();
