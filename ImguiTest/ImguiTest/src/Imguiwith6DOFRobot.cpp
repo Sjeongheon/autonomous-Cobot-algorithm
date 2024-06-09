@@ -186,94 +186,7 @@ void render_robot(Kinematics* kinematics, Options* options) {
     gluCylinder(quadric, modelRadius, modelRadius, modelHeight8, 32, 32);
     
     glPopMatrix();
-    // // 
-    // for (int i = 1; i <= kinematics->robot.n_links; ++i) {
-    //     float link_len = sqrt(pow(kinematics->h_tf[i].t.x - kinematics->h_tf[i-1].t.x, 2) +
-    //                           pow(kinematics->h_tf[i].t.y - kinematics->h_tf[i-1].t.y, 2) +
-    //                           pow(kinematics->h_tf[i].t.z - kinematics->h_tf[i-1].t.z, 2));
-    //     float ang;
-    //     Vec3 ax;
-    //     angle_axis_from_vec_dir({0.0f, 0.0f, 1.0f}, 
-    //                             {kinematics->h_tf[i].t.x - kinematics->h_tf[i-1].t.x,
-    //                              kinematics->h_tf[i].t.y - kinematics->h_tf[i-1].t.y,
-    //                              kinematics->h_tf[i].t.z - kinematics->h_tf[i-1].t.z},
-    //                             &ang, &ax);
-
-    //     glPushMatrix();
-    //     glColor4f(0.8f, 0.3f, 0.3f, 0.7f);
-    //     glTranslatef(kinematics->h_tf[i-1].t.x, kinematics->h_tf[i-1].t.y, kinematics->h_tf[i-1].t.z);
-    //     glRotatef(ang * (180.0 / PI), ax.x, ax.y, ax.z);
-    //     gluCylinder(quadric, 2.0f, 2.0f, 2.0f, 32, 32);
-    //     glPopMatrix();
-    // }
-
-    // for (int i = 1; i <= kinematics->robot.n_dofs; ++i) {
-    //     float ang;
-    //     Vec3 ax;
-    //     angle_axis_from_vec_dir({0.0f, 0.0f, 1.0f}, kinematics->h_tf[i-1].Rz, &ang, &ax);
-    //     glPushMatrix();
-    //     glColor4f(0.3f, 0.8f, 0.3f, 0.7f);
-    //     glTranslatef(kinematics->h_tf[i-1].t.x, kinematics->h_tf[i-1].t.y, kinematics->h_tf[i-1].t.z);
-    //     glRotatef(ang * (180.0 / PI), ax.x, ax.y, ax.z);
-    //     glTranslatef(0.0f, 0.0f, -0.5f * 0.1f);
-    //     gluCylinder(quadric, 2.0f, 2.0f, 5.0f, 32, 32);
-        
-    //     glColor4f(0.3f, 0.8f, 0.3f, 0.7f);
-    //     glTranslatef(kinematics->h_tf[i-1].t.x, kinematics->h_tf[i-1].t.y, kinematics->h_tf[i-1].t.z);
-    //     glRotatef(ang * (180.0 / PI), ax.x, ax.y, ax.z);
-    //     glTranslatef(0.0f, 0.0f, 0.5f * 0.1f);
-    //     gluDisk(quadric, 0.0f, 2.0f, 32, 1);
-        
-    //     glColor4f(0.3f, 0.8f, 0.3f, 0.7f);
-    //     glTranslatef(kinematics->h_tf[i-1].t.x, kinematics->h_tf[i-1].t.y, kinematics->h_tf[i-1].t.z);
-    //     glRotatef(ang * (180.0 / PI), ax.x, ax.y, ax.z);
-    //     glTranslatef(0.0f, 0.0f, -0.5f * 0.1f);
-    //     gluDisk(quadric, 0.0f, 2.0f, 32, 1);
-    //     glPopMatrix();
-    // }
-
-    // glPushMatrix();
-    // glColor4f(0.3f, 0.3f, 0.8f, 0.7f);
-    // glTranslatef(kinematics->h_tf[kinematics->robot.n_links].t.x,
-    //              kinematics->h_tf[kinematics->robot.n_links].t.y,
-    //              kinematics->h_tf[kinematics->robot.n_links].t.z);
-    // gluSphere(quadric, 2.0f, 32, 32);
-    // glPopMatrix();
-
-    // for (int i = 0; i <= kinematics->robot.n_links; ++i) {
-    //     glPushMatrix();
-    //     glColor4f(0.8f, 0.8f, 0.3f, 0.7f);
-    //     glTranslatef(kinematics->link_com[i].x, kinematics->link_com[i].y, kinematics->link_com[i].z);
-    //     gluSphere(quadric, 2.0f, 32, 32);
-    //     glPopMatrix();
-    // }
-
     gluDeleteQuadric(quadric);
-}
-
-// 더미 데이터 생성
-void create_dummy_data(Kinematics* kinematics) {
-    kinematics->robot.n_links = 4;
-    kinematics->robot.n_dofs = 4;
-
-    kinematics->h_tf = (Transform*)malloc((4 + 1) * sizeof(Transform));
-    kinematics->h_tf_links = (Transform*)malloc((4 + 1) * sizeof(Transform));
-    kinematics->link_com = (Vec3*)malloc((4 + 1) * sizeof(Vec3));
-    kinematics->link_vel = (Vec3*)malloc((4 + 1) * sizeof(Vec3));
-    kinematics->com_vel = (Vec3*)malloc((4 + 1) * sizeof(Vec3));
-    kinematics->link_acc = (Vec3*)malloc((4 + 1) * sizeof(Vec3));
-    kinematics->com_acc = (Vec3*)malloc((4 + 1) * sizeof(Vec3));
-
-    for (int i = 0; i <= 4; ++i) {
-        kinematics->h_tf[i].t = {i * 0.1f, 0.0f, 0.0f};
-        kinematics->h_tf[i].Rz = {0.0f, 0.0f, 1.0f};
-
-        kinematics->link_com[i] = {i * 0.1f, 0.0f, 0.0f};
-        kinematics->link_vel[i] = {0.0f, 1.0f, 0.0f};
-        kinematics->com_vel[i] = {0.0f, 1.0f, 0.0f};
-        kinematics->link_acc[i] = {0.0f, 1.0f, 0.0f};
-        kinematics->com_acc[i] = {0.0f, 1.0f, 0.0f};
-    }
 }
 
 // Clears the window and draws the tetrahedron.
@@ -301,19 +214,8 @@ void display() {
     }
     glEnd();
 
-    // // Draw the tetrahedron.
-    // glBegin(GL_TRIANGLE_STRIP);
-    // glColor3f(1, 1, 1); glVertex3f(0, 2, 0);
-    // glColor3f(1, 0, 0); glVertex3f(-1, 0, 1);
-    // glColor3f(0, 1, 0); glVertex3f(1, 0, 1);
-    // glColor3f(0, 0, 1); glVertex3f(0, 0, -1);
-    // glColor3f(1, 1, 1); glVertex3f(0, 2, 0);
-    // glColor3f(1, 0, 0); glVertex3f(-1, 0, 1);
-    // glEnd();
-
     Options options = {1, 1, {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}, 1};
     Kinematics kinematics;
-    create_dummy_data(&kinematics);
     render_robot(&kinematics, &options);
 }
 
